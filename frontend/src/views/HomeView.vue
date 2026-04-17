@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-
 const router = useRouter();
 </script>
 
 <template>
-  <div class="relative w-full h-screen overflow-hidden" @click="router.push('/work')">
-    <img
-      src="/painting-4.jpg"
-      alt=""
-      class="absolute inset-0 w-full h-full object-cover object-top select-none"
-      draggable="false"
-    />
+  <div
+    class="relative w-full h-screen flex items-center justify-center cursor-pointer overflow-hidden"
+    @click="router.push('/work')"
+  >
+    <!-- Background -->
+    <div class="absolute inset-0" style="background-image: url('/painting-0.jpg'); background-size: cover; background-position: top center; background-repeat: no-repeat; " />
 
-    <div class="absolute top-16 left-24 select-none" style="font-family: 'Caveat', cursive; font-size: 4.5rem; font-weight: 700; line-height: 1; color: #1e2e1c; letter-spacing: 0.02em;">N.lale</div>
+    <!-- Logo -->
+    <img src="/logo-sig.png" alt="N.lale" class="absolute top-10 left-12 select-none" style="height: 60px; width: auto;" />
 
-    <div class="absolute bottom-8 right-10">
-      <span class="text-stone-500 text-xs tracking-[0.2em] uppercase select-none">enter →</span>
-    </div>
+    <!-- Enter -->
+    <div class="absolute bottom-8 right-10 text-stone-200/60 text-xs tracking-[0.2em] uppercase select-none">enter →</div>
   </div>
 </template>
