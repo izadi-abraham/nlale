@@ -5,7 +5,7 @@ const route = useRoute();
 </script>
 
 <template>
-  <header v-if="route.name !== 'home'" class="border-b border-stone-200 bg-stone-50">
+  <header v-if="route.name !== 'home' && !route.path.startsWith('/admin')" class="border-b border-stone-200 bg-stone-50">
     <div class="px-12 py-8 flex items-center justify-between">
       <RouterLink to="/">
         <img src="/logo-sig.png" alt="n.lale" style="height: 60px; width: auto; filter: invert(1) sepia(0.15) saturate(0.8);" />

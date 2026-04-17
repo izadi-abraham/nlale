@@ -4,6 +4,7 @@ import { staticPlugin } from "@elysiajs/static";
 import { join } from "path";
 import { mkdirSync } from "fs";
 import { artworksRoutes } from "./artworks/artworks.routes";
+import { adminRoutes } from "./admin/admin.routes";
 
 const uploadsDir = process.env.UPLOADS_DIR ?? join(import.meta.dir, "../uploads");
 mkdirSync(uploadsDir, { recursive: true });
@@ -31,6 +32,7 @@ const app = new Elysia()
     log("ERROR", request.method, path, set.status as number);
     console.error(error);
   })
+  .use(adminRoutes)
   .use(artworksRoutes)
   .listen(Number(process.env.PORT ?? 3000));
 
