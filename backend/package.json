@@ -7,9 +7,10 @@
     "seed": "bun run src/seed.ts"
   },
   "dependencies": {
-    "elysia": "latest",
     "@elysiajs/cors": "latest",
-    "@elysiajs/static": "latest"
+    "@elysiajs/jwt": "^1.4.1",
+    "@elysiajs/static": "latest",
+    "elysia": "latest"
   },
   "devDependencies": {
     "bun-types": "latest"
