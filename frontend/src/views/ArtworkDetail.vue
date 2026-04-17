@@ -18,8 +18,8 @@ onMounted(async () => {
 
 <template>
   <main class="max-w-5xl mx-auto px-4 py-10">
-    <RouterLink to="/" class="text-sm text-stone-400 hover:text-stone-700 transition-colors">
-      ← Back to gallery
+    <RouterLink to="/work" class="text-sm text-stone-400 hover:text-stone-700 transition-colors">
+      ← Back
     </RouterLink>
 
     <div v-if="loading" class="mt-8 grid md:grid-cols-2 gap-10">
