@@ -36,3 +36,6 @@ Thumbs.db
 *.log
 npm-debug.log*
 bun-debug.log*
+
+# Local planning notes
+plan.md
