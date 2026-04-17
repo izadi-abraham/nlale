@@ -34,10 +34,15 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
   .get("/artworks/:id", ({ params: { id }, error }) => {
     const artwork = db
       .query("SELECT * FROM artworks WHERE id = $id")
-      .get({ $id: Number(id) });
+      .get({ $id: Number(id) }) as any;
 
     if (!artwork) return error(404, { message: "Artwork not found" });
-    return artwork;
+
+    const images = db
+      .query("SELECT id, image_path, sort_order FROM artwork_images WHERE artwork_id = $id ORDER BY sort_order ASC, id ASC")
+      .all({ $id: Number(id) });
+
+    return { ...artwork, images };
   })
 
   .get("/filters", () => {
@@ -58,15 +63,15 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
 
     await Bun.write(filepath, await file.arrayBuffer());
 
-    const insert = db.prepare(`
+    const imagePath = `uploads/${filename}`;
+
+    const result = db.prepare(`
       INSERT INTO artworks (title, description, image_path, type, year, medium, collection, dimensions)
       VALUES ($title, $description, $image_path, $type, $year, $medium, $collection, $dimensions)
-    `);
-
-    const result = insert.run({
+    `).run({
       $title:       title,
       $description: description ?? "",
-      $image_path:  `uploads/${filename}`,
+      $image_path:  imagePath,
       $type:        type,
       $year:        Number(year),
       $medium:      medium,
@@ -74,7 +79,13 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
       $dimensions:  dimensions ?? "",
     });
 
-    return { id: result.lastInsertRowid };
+    const artworkId = result.lastInsertRowid;
+
+    db.prepare(
+      "INSERT INTO artwork_images (artwork_id, image_path, sort_order) VALUES ($artwork_id, $image_path, 0)"
+    ).run({ $artwork_id: artworkId, $image_path: imagePath });
+
+    return { id: artworkId };
   }, {
     body: t.Object({
       file:        t.File({ type: "image/*" }),
@@ -85,5 +96,33 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
       medium:      t.String({ minLength: 1 }),
       collection:  t.Optional(t.String()),
       dimensions:  t.Optional(t.String()),
+    }),
+  })
+
+  .post("/artworks/:id/images", async ({ params: { id }, body, error }) => {
+    const artwork = db.query("SELECT id FROM artworks WHERE id = $id").get({ $id: Number(id) });
+    if (!artwork) return error(404, { message: "Artwork not found" });
+
+    const { file } = body;
+    const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+    const filename = `${Date.now()}-${id}-extra.${ext}`;
+    const filepath = join(uploadsDir, filename);
+
+    await Bun.write(filepath, await file.arrayBuffer());
+
+    const imagePath = `uploads/${filename}`;
+
+    const maxOrder = (db.query(
+      "SELECT COALESCE(MAX(sort_order), -1) as m FROM artwork_images WHERE artwork_id = $id"
+    ).get({ $id: Number(id) }) as any).m;
+
+    const result = db.prepare(
+      "INSERT INTO artwork_images (artwork_id, image_path, sort_order) VALUES ($artwork_id, $image_path, $sort_order)"
+    ).run({ $artwork_id: Number(id), $image_path: imagePath, $sort_order: maxOrder + 1 });
+
+    return { id: result.lastInsertRowid, image_path: imagePath };
+  }, {
+    body: t.Object({
+      file: t.File({ type: "image/*" }),
     }),
   });

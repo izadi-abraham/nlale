@@ -1,8 +1,16 @@
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+
+const visible = ref(false);
+onMounted(() => { visible.value = true; });
+</script>
+
 <template>
   <main class="max-w-4xl mx-auto px-6 py-16">
-
-    <div class="grid md:grid-cols-2 gap-16 items-start">
-
+    <div
+      class="grid md:grid-cols-2 gap-16 items-start transition-all duration-500 ease-out"
+      :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
+    >
       <!-- Photo -->
       <div>
         <img
@@ -46,6 +54,5 @@
 
       </div>
     </div>
-
   </main>
 </template>

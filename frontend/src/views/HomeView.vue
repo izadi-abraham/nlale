@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
-const router = useRouter();
+import { RouterLink } from "vue-router";
 </script>
 
 <template>
-  <div
-    class="relative w-full h-screen flex items-center justify-center cursor-pointer overflow-hidden"
-    @click="router.push('/work')"
-  >
+  <div class="relative w-full h-screen overflow-hidden">
     <!-- Background -->
-    <div class="absolute inset-0" style="background-image: url('/painting-0.jpg'); background-size: cover; background-position: top center; background-repeat: no-repeat; " />
+    <div class="absolute inset-0" style="background-image: url('/painting-0.jpg'); background-size: cover; background-position: top center; background-repeat: no-repeat;" />
 
     <!-- Logo -->
     <img src="/logo-sig.png" alt="N.lale" class="absolute top-10 left-12 select-none" style="height: 60px; width: auto;" />
 
-    <!-- Enter -->
-    <div class="absolute bottom-8 right-10 text-stone-200/60 text-xs tracking-[0.2em] uppercase select-none">enter →</div>
+    <!-- Nav -->
+    <nav class="absolute bottom-10 left-12 flex gap-8">
+      <RouterLink
+        to="/work"
+        class="text-sm tracking-[0.25em] uppercase select-none hover:underline underline-offset-4 transition-opacity"
+        style="color: #e8dfd4;"
+      >Work</RouterLink>
+      <RouterLink
+        to="/about"
+        class="text-sm tracking-[0.25em] uppercase select-none hover:underline underline-offset-4 transition-opacity"
+        style="color: #e8dfd4;"
+      >About</RouterLink>
+    </nav>
   </div>
 </template>

@@ -7,6 +7,7 @@ const route = useRoute();
 const artwork = ref<Artwork | null>(null);
 const loading = ref(true);
 const notFound = ref(false);
+const selectedIndex = ref(0);
 
 onMounted(async () => {
   const result = await fetchArtwork(Number(route.params.id));
@@ -14,6 +15,10 @@ onMounted(async () => {
   else artwork.value = result;
   loading.value = false;
 });
+
+function imageUrl(path: string) {
+  return `${API_URL}/${path}`;
+}
 </script>
 
 <template>
@@ -36,13 +41,36 @@ onMounted(async () => {
     </p>
 
     <div v-else-if="artwork" class="mt-8 grid md:grid-cols-2 gap-10 items-start">
-      <img
-        :src="`${API_URL}/${artwork.image_path}`"
-        :alt="artwork.title"
-        class="w-full rounded-lg shadow-md object-cover"
-        @error="($event.target as HTMLImageElement).src = 'https://placehold.co/600x450/e7e5e4/a8a29e?text=No+Image'"
-      />
+      <!-- Image column -->
+      <div>
+        <img
+          :src="artwork.images?.[selectedIndex]
+            ? imageUrl(artwork.images[selectedIndex].image_path)
+            : imageUrl(artwork.image_path)"
+          :alt="artwork.title"
+          class="w-full object-contain"
+          @error="($event.target as HTMLImageElement).src = 'https://placehold.co/600x450/e7e5e4/a8a29e?text=No+Image'"
+        />
 
+        <!-- Thumbnail strip (only if multiple images) -->
+        <div v-if="artwork.images && artwork.images.length > 1" class="flex gap-2 mt-3 flex-wrap">
+          <button
+            v-for="(img, i) in artwork.images"
+            :key="img.id"
+            @click="selectedIndex = i"
+            class="w-14 h-14 overflow-hidden flex-shrink-0 transition-opacity"
+            :class="selectedIndex === i ? 'opacity-100 ring-1 ring-stone-800' : 'opacity-50 hover:opacity-80'"
+          >
+            <img
+              :src="imageUrl(img.image_path)"
+              class="w-full h-full object-cover"
+              @error="($event.target as HTMLImageElement).src = 'https://placehold.co/56x56/e7e5e4/a8a29e?text=?'"
+            />
+          </button>
+        </div>
+      </div>
+
+      <!-- Info column -->
       <div>
         <h1 class="text-3xl font-semibold text-stone-800">{{ artwork.title }}</h1>
         <p class="mt-1 text-stone-400 text-sm capitalize">{{ artwork.type }}</p>

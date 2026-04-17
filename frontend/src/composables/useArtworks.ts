@@ -3,6 +3,12 @@ import { ref, computed } from "vue";
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 const API = API_URL;
 
+export interface ArtworkImage {
+  id: number;
+  image_path: string;
+  sort_order: number;
+}
+
 export interface Artwork {
   id: number;
   title: string;
@@ -14,6 +20,7 @@ export interface Artwork {
   collection: string;
   dimensions: string;
   created_at: string;
+  images?: ArtworkImage[];
 }
 
 export interface Filters {

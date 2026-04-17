@@ -1,10 +1,25 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useArtworks } from "@/composables/useArtworks";
 import GalleryGrid from "@/components/GalleryGrid.vue";
 import FilterBar from "@/components/FilterBar.vue";
 
-const { artworks, filters, loading, activeFilters, fetchFilters, fetchArtworks, setFilter, clearFilters } = useArtworks();
+const { artworks, filters, loading, fetchFilters, fetchArtworks, setFilter } = useArtworks();
+
+const activeType = ref("");
+const sort = ref<"newest" | "oldest">("newest");
+
+const displayed = computed(() => {
+  const list = [...artworks.value];
+  return sort.value === "newest"
+    ? list.sort((a, b) => b.year - a.year)
+    : list.sort((a, b) => a.year - b.year);
+});
+
+function setType(value: string) {
+  activeType.value = value;
+  setFilter("type", value);
+}
 
 onMounted(async () => {
   await fetchFilters();
@@ -17,11 +32,12 @@ onMounted(async () => {
     <div class="mb-8">
       <FilterBar
         :filters="filters"
-        :active="activeFilters"
-        @change="setFilter"
-        @clear="clearFilters"
+        :active-type="activeType"
+        :sort="sort"
+        @set-type="setType"
+        @set-sort="sort = $event"
       />
     </div>
-    <GalleryGrid :artworks="artworks" :loading="loading" />
+    <GalleryGrid :artworks="displayed" :loading="loading" />
   </main>
 </template>

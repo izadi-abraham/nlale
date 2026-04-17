@@ -6,6 +6,7 @@ const db = new Database(process.env.DB_PATH ?? join(import.meta.dir, "../../gall
 });
 
 db.run("PRAGMA journal_mode = WAL");
+db.run("PRAGMA foreign_keys = ON");
 
 db.run(`
   CREATE TABLE IF NOT EXISTS artworks (
@@ -21,5 +22,26 @@ db.run(`
     created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
   )
 `);
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS artwork_images (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    artwork_id INTEGER NOT NULL REFERENCES artworks(id) ON DELETE CASCADE,
+    image_path TEXT    NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0
+  )
+`);
+
+// Migrate existing artworks into artwork_images if the table is empty
+const imageCount = (db.query("SELECT COUNT(*) as n FROM artwork_images").get() as any).n;
+if (imageCount === 0) {
+  const artworks = db.query("SELECT id, image_path FROM artworks").all() as any[];
+  const insertImage = db.prepare(
+    "INSERT INTO artwork_images (artwork_id, image_path, sort_order) VALUES ($artwork_id, $image_path, 0)"
+  );
+  for (const a of artworks) {
+    insertImage.run({ $artwork_id: a.id, $image_path: a.image_path });
+  }
+}
 
 export default db;
