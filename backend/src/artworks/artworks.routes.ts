@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { join } from "path";
 import { unlinkSync, existsSync } from "fs";
+import sharp from "sharp";
 import db from "../db";
 import { authGuard } from "../admin/admin.routes";
 
@@ -12,6 +13,18 @@ const ArtworkQuery = t.Object({
   medium:     t.Optional(t.String()),
   collection: t.Optional(t.String()),
 });
+
+async function processAndSave(file: File, basename: string): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const output = await sharp(buffer)
+    .rotate()                                                    // auto-fix EXIF orientation
+    .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 85 })
+    .toBuffer();
+  const filename = `${basename}.webp`;
+  await Bun.write(join(uploadsDir, filename), output);
+  return `uploads/${filename}`;
+}
 
 function deleteFile(imagePath: string) {
   const fullPath = join(uploadsDir, imagePath.replace(/^uploads\//, ""));
@@ -35,14 +48,15 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
     if (collection) { conditions.push("a.collection = $collection"); params.$collection = collection; }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    return db.query(`
+    const sql = `
       SELECT a.id, a.title, a.description, a.type, a.year, a.medium, a.collection, a.dimensions, a.created_at,
         COALESCE(
           (SELECT ai.image_path FROM artwork_images ai WHERE ai.artwork_id = a.id ORDER BY ai.sort_order ASC, ai.id ASC LIMIT 1),
           a.image_path
         ) as image_path
       FROM artworks a ${where} ORDER BY a.year DESC, a.id DESC
-    `).all(params);
+    `;
+    return conditions.length ? db.query(sql).all(params) : db.query(sql).all();
   }, { query: ArtworkQuery })
 
   .get("/artworks/:id", ({ params: { id }, set }) => {
@@ -76,15 +90,12 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
     const filesArr: File[] = Array.isArray(files) ? files : [files as File];
     const thumbIdx = Math.min(Math.max(Number(thumbIdxStr ?? "0") || 0, 0), filesArr.length - 1);
 
-    // Save all files to disk
+    // Process and save all files (resize + convert to WebP)
     const slug = title.toLowerCase().replace(/\s+/g, "-");
     const savedPaths: string[] = [];
     for (let i = 0; i < filesArr.length; i++) {
-      const f = filesArr[i];
-      const ext = (f.name.split(".").pop() ?? "jpg").toLowerCase();
-      const filename = `${Date.now()}-${i}-${slug}.${ext}`;
-      await Bun.write(join(uploadsDir, filename), await f.arrayBuffer());
-      savedPaths.push(`uploads/${filename}`);
+      const path = await processAndSave(filesArr[i], `${Date.now()}-${i}-${slug}`);
+      savedPaths.push(path);
     }
 
     // Thumbnail first, then the rest in original order
@@ -166,11 +177,7 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
     if (!artwork) { set.status = 404; return { message: "Artwork not found" }; }
 
     const { file } = body;
-    const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-    const filename = `${Date.now()}-${id}-extra.${ext}`;
-    await Bun.write(join(uploadsDir, filename), await file.arrayBuffer());
-
-    const imagePath = `uploads/${filename}`;
+    const imagePath = await processAndSave(file, `${Date.now()}-${id}-extra`);
     const maxOrder = (db.query("SELECT COALESCE(MAX(sort_order), -1) as m FROM artwork_images WHERE artwork_id = $id")
       .get({ $id: Number(id) }) as any).m;
 
