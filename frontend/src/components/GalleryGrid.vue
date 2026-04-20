@@ -36,7 +36,7 @@ const skeletonAspects = [
     <div
       v-for="(artwork, i) in artworks"
       :key="artwork.id"
-      class="break-inside-avoid mb-1 opacity-0 animate-[cardIn_0.4s_ease_forwards]"
+      class="break-inside-avoid mb-1 card-enter"
       :style="`animation-delay: ${i * 40}ms`"
     >
       <ArtworkCard :artwork="artwork" />
@@ -45,6 +45,9 @@ const skeletonAspects = [
 </template>
 
 <style scoped>
+.card-enter {
+  animation: cardIn 0.4s ease both;
+}
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
