@@ -45,7 +45,7 @@ function imageUrl(path: string) {
       <div>
         <img
           :src="artwork.images?.[selectedIndex]
-            ? imageUrl(artwork.images[selectedIndex].image_path)
+            ? imageUrl(artwork.images[selectedIndex]!.image_path)
             : imageUrl(artwork.image_path)"
           :alt="artwork.title"
           class="w-full object-contain"

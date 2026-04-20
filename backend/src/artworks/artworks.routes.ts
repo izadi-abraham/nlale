@@ -29,13 +29,20 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
     const conditions: string[] = [];
     const params: Record<string, string | number> = {};
 
-    if (type)       { conditions.push("type = $type");             params.$type = type; }
-    if (year)       { conditions.push("year = $year");             params.$year = Number(year); }
-    if (medium)     { conditions.push("medium = $medium");         params.$medium = medium; }
-    if (collection) { conditions.push("collection = $collection"); params.$collection = collection; }
+    if (type)       { conditions.push("a.type = $type");             params.$type = type; }
+    if (year)       { conditions.push("a.year = $year");             params.$year = Number(year); }
+    if (medium)     { conditions.push("a.medium = $medium");         params.$medium = medium; }
+    if (collection) { conditions.push("a.collection = $collection"); params.$collection = collection; }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    return db.query(`SELECT * FROM artworks ${where} ORDER BY year DESC, id DESC`).all(params);
+    return db.query(`
+      SELECT a.id, a.title, a.description, a.type, a.year, a.medium, a.collection, a.dimensions, a.created_at,
+        COALESCE(
+          (SELECT ai.image_path FROM artwork_images ai WHERE ai.artwork_id = a.id ORDER BY ai.sort_order ASC, ai.id ASC LIMIT 1),
+          a.image_path
+        ) as image_path
+      FROM artworks a ${where} ORDER BY a.year DESC, a.id DESC
+    `).all(params);
   }, { query: ArtworkQuery })
 
   .get("/artworks/:id", ({ params: { id }, set }) => {
@@ -65,38 +72,52 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
   .use(authGuard)
 
   .post("/artworks", async ({ body }) => {
-    const { file, title, description, type, year, medium, collection, dimensions } = body;
+    const { files, thumbnailIndex: thumbIdxStr, title, description, type, year, medium, collection, dimensions } = body;
+    const filesArr: File[] = Array.isArray(files) ? files : [files as File];
+    const thumbIdx = Math.min(Math.max(Number(thumbIdxStr ?? "0") || 0, 0), filesArr.length - 1);
 
-    const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-    const filename = `${Date.now()}-${title.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
-    await Bun.write(join(uploadsDir, filename), await file.arrayBuffer());
+    // Save all files to disk
+    const slug = title.toLowerCase().replace(/\s+/g, "-");
+    const savedPaths: string[] = [];
+    for (let i = 0; i < filesArr.length; i++) {
+      const f = filesArr[i];
+      const ext = (f.name.split(".").pop() ?? "jpg").toLowerCase();
+      const filename = `${Date.now()}-${i}-${slug}.${ext}`;
+      await Bun.write(join(uploadsDir, filename), await f.arrayBuffer());
+      savedPaths.push(`uploads/${filename}`);
+    }
 
-    const imagePath = `uploads/${filename}`;
+    // Thumbnail first, then the rest in original order
+    const orderedPaths = [
+      savedPaths[thumbIdx],
+      ...savedPaths.filter((_, i) => i !== thumbIdx),
+    ];
 
     const result = db.prepare(`
       INSERT INTO artworks (title, description, image_path, type, year, medium, collection, dimensions)
       VALUES ($title, $description, $image_path, $type, $year, $medium, $collection, $dimensions)
     `).run({
       $title: title, $description: description ?? "",
-      $image_path: imagePath, $type: type, $year: Number(year),
+      $image_path: orderedPaths[0], $type: type, $year: Number(year),
       $medium: medium, $collection: collection ?? "", $dimensions: dimensions ?? "",
     });
 
     const artworkId = result.lastInsertRowid;
-    db.prepare("INSERT INTO artwork_images (artwork_id, image_path, sort_order) VALUES ($artwork_id, $image_path, 0)")
-      .run({ $artwork_id: artworkId, $image_path: imagePath });
+    const insertImg = db.prepare("INSERT INTO artwork_images (artwork_id, image_path, sort_order) VALUES ($artwork_id, $image_path, $sort_order)");
+    orderedPaths.forEach((p, i) => insertImg.run({ $artwork_id: artworkId, $image_path: p, $sort_order: i }));
 
     return { id: artworkId };
   }, {
     body: t.Object({
-      file:        t.File({ type: "image/*" }),
-      title:       t.String({ minLength: 1 }),
-      description: t.Optional(t.String()),
-      type:        t.Union([t.Literal("painting"), t.Literal("sculpture")]),
-      year:        t.String(),
-      medium:      t.String({ minLength: 1 }),
-      collection:  t.Optional(t.String()),
-      dimensions:  t.Optional(t.String()),
+      files:          t.Union([t.File({ type: "image/*" }), t.Files({ type: "image/*" })]),
+      thumbnailIndex: t.Optional(t.String()),
+      title:          t.String({ minLength: 1 }),
+      description:    t.Optional(t.String()),
+      type:           t.Union([t.Literal("painting"), t.Literal("sculpture")]),
+      year:           t.String(),
+      medium:         t.String({ minLength: 1 }),
+      collection:     t.Optional(t.String()),
+      dimensions:     t.Optional(t.String()),
     }),
   })
 
@@ -168,5 +189,25 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
 
     deleteFile(image.image_path);
     db.prepare("DELETE FROM artwork_images WHERE id = $id").run({ $id: Number(imageId) });
+    return { ok: true };
+  })
+
+  .put("/artworks/:id/images/:imageId/thumbnail", ({ params: { id, imageId }, set }) => {
+    const image = db.query("SELECT * FROM artwork_images WHERE id = $imageId AND artwork_id = $artworkId")
+      .get({ $imageId: Number(imageId), $artworkId: Number(id) }) as any;
+    if (!image) { set.status = 404; return { message: "Image not found" }; }
+
+    const allImages = db.query("SELECT * FROM artwork_images WHERE artwork_id = $id ORDER BY sort_order ASC, id ASC")
+      .all({ $id: Number(id) }) as any[];
+
+    // Chosen image first, rest in their existing order
+    const reordered = [image, ...allImages.filter(img => img.id !== Number(imageId))];
+    const updateOrder = db.prepare("UPDATE artwork_images SET sort_order = $sort_order WHERE id = $id");
+    reordered.forEach((img, i) => updateOrder.run({ $sort_order: i, $id: img.id }));
+
+    // Keep artworks.image_path in sync
+    db.prepare("UPDATE artworks SET image_path = $image_path WHERE id = $artwork_id")
+      .run({ $image_path: image.image_path, $artwork_id: Number(id) });
+
     return { ok: true };
   });

@@ -16,6 +16,7 @@ const saving = ref(false);
 const saveError = ref("");
 const addingImage = ref(false);
 const deletingImageId = ref<number | null>(null);
+const settingThumbnailId = ref<number | null>(null);
 
 onMounted(async () => {
   const res = await fetch(`${API_URL}/api/artworks/${id}`);
@@ -69,6 +70,21 @@ async function deleteImage(imageId: number) {
     artwork.value.images = artwork.value.images?.filter(i => i.id !== imageId);
   }
   deletingImageId.value = null;
+}
+
+async function setThumbnail(imageId: number) {
+  settingThumbnailId.value = imageId;
+  await fetch(`${API_URL}/api/artworks/${id}/images/${imageId}/thumbnail`, {
+    method: "PUT", headers: authHeader(),
+  });
+  if (artwork.value?.images) {
+    const idx = artwork.value.images.findIndex(i => i.id === imageId);
+    if (idx > 0) {
+      const item = artwork.value.images.splice(idx, 1)[0];
+      if (item) artwork.value.images.unshift(item);
+    }
+  }
+  settingThumbnailId.value = null;
 }
 </script>
 
@@ -137,13 +153,26 @@ async function deleteImage(imageId: number) {
         <div>
           <h2 class="text-xs uppercase tracking-widest text-stone-400 mb-4">Images</h2>
           <div class="grid grid-cols-4 gap-2 mb-4">
-            <div v-for="img in artwork.images" :key="img.id" class="relative group aspect-square bg-stone-100 overflow-hidden">
+            <div v-for="(img, idx) in artwork.images" :key="img.id" class="relative group aspect-square bg-stone-100 overflow-hidden">
               <img :src="`${API_URL}/${img.image_path}`" class="w-full h-full object-cover" />
-              <button
-                @click="deleteImage(img.id)"
-                :disabled="deletingImageId === img.id"
-                class="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/60 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 text-white text-xs uppercase tracking-widest"
-              >{{ deletingImageId === img.id ? '...' : 'Remove' }}</button>
+              <!-- Cover badge on thumbnail -->
+              <div v-if="idx === 0" class="absolute bottom-1 left-1 bg-stone-800 text-white text-[9px] uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
+                Cover
+              </div>
+              <!-- Hover actions -->
+              <div class="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/55 transition-colors flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
+                <button
+                  v-if="idx !== 0"
+                  @click="setThumbnail(img.id)"
+                  :disabled="settingThumbnailId === img.id"
+                  class="bg-stone-800 text-white text-[9px] uppercase tracking-widest px-2.5 py-1 hover:bg-stone-700 disabled:opacity-50 transition-colors"
+                >{{ settingThumbnailId === img.id ? '...' : 'Set cover' }}</button>
+                <button
+                  @click="deleteImage(img.id)"
+                  :disabled="deletingImageId === img.id"
+                  class="bg-red-500 text-white text-[9px] uppercase tracking-widest px-2.5 py-1 hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >{{ deletingImageId === img.id ? '...' : 'Remove' }}</button>
+              </div>
             </div>
           </div>
 

@@ -8,21 +8,27 @@ const router = useRouter();
 const { authHeader } = useAuth();
 
 const form = ref({ title: "", description: "", type: "painting", year: String(new Date().getFullYear()), medium: "", collection: "", dimensions: "" });
-const file = ref<File | null>(null);
+const files = ref<File[]>([]);
+const previews = ref<string[]>([]);
+const thumbnailIndex = ref(0);
 const error = ref("");
 const loading = ref(false);
 
-function onFile(e: Event) {
-  file.value = (e.target as HTMLInputElement).files?.[0] ?? null;
+function onFiles(e: Event) {
+  const selected = Array.from((e.target as HTMLInputElement).files ?? []);
+  files.value = selected;
+  previews.value = selected.map(f => URL.createObjectURL(f));
+  thumbnailIndex.value = 0;
 }
 
 async function submit() {
-  if (!file.value) { error.value = "Please select an image."; return; }
+  if (!files.value.length) { error.value = "Please select at least one image."; return; }
   error.value = "";
   loading.value = true;
 
   const fd = new FormData();
-  fd.append("file", file.value);
+  files.value.forEach(f => fd.append("files", f));
+  fd.append("thumbnailIndex", String(thumbnailIndex.value));
   Object.entries(form.value).forEach(([k, v]) => fd.append(k, v));
 
   const res = await fetch(`${API_URL}/api/artworks`, {
@@ -91,8 +97,25 @@ async function submit() {
           </div>
 
           <div class="col-span-2">
-            <label class="block text-xs uppercase tracking-widest text-stone-400 mb-1.5">Image *</label>
-            <input type="file" accept="image/*" @change="onFile" required class="text-sm text-stone-500 file:mr-3 file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-xs file:uppercase file:tracking-widest file:text-stone-600 hover:file:bg-stone-200" />
+            <label class="block text-xs uppercase tracking-widest text-stone-400 mb-1.5">Images *</label>
+            <input type="file" accept="image/*" multiple @change="onFiles" class="text-sm text-stone-500 file:mr-3 file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-xs file:uppercase file:tracking-widest file:text-stone-600 hover:file:bg-stone-200" />
+
+            <!-- Preview grid — click to set as cover -->
+            <div v-if="previews.length" class="grid grid-cols-4 gap-2 mt-3">
+              <div
+                v-for="(preview, i) in previews"
+                :key="i"
+                class="relative aspect-square overflow-hidden cursor-pointer transition-all"
+                :class="thumbnailIndex === i ? 'ring-2 ring-stone-800' : 'ring-1 ring-stone-200 opacity-70 hover:opacity-100'"
+                @click="thumbnailIndex = i"
+              >
+                <img :src="preview" class="w-full h-full object-cover" />
+                <div v-if="thumbnailIndex === i" class="absolute bottom-1 left-1 bg-stone-800 text-white text-[9px] uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
+                  Cover
+                </div>
+              </div>
+            </div>
+            <p v-if="previews.length > 1" class="text-xs text-stone-400 mt-2">Click an image to set it as the gallery thumbnail.</p>
           </div>
         </div>
 
