@@ -1,8 +1,7 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { staticPlugin } from "@elysiajs/static";
 import { join } from "path";
-import { mkdirSync } from "fs";
+import { mkdirSync, existsSync } from "fs";
 import { artworksRoutes } from "./artworks/artworks.routes";
 import { adminRoutes } from "./admin/admin.routes";
 
@@ -18,7 +17,11 @@ function log(level: "INFO" | "ERROR", method: string, path: string, status?: num
 
 const app = new Elysia()
   .use(cors({ origin: process.env.CORS_ORIGIN ?? "http://localhost:5173" }))
-  .use(staticPlugin({ assets: uploadsDir, prefix: "/uploads" }))
+  .get("/uploads/:filename", ({ params: { filename }, set }) => {
+    const filePath = join(uploadsDir, filename);
+    if (!existsSync(filePath)) { set.status = 404; return; }
+    return Bun.file(filePath);
+  })
   .onRequest(({ request, store }) => {
     (store as any)._reqStart = Date.now();
   })

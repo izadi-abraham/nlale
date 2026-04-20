@@ -18,6 +18,7 @@ interface ArtworkRow {
 const artworks = ref<ArtworkRow[]>([]);
 const loading = ref(true);
 const deleting = ref<number | null>(null);
+const deleteError = ref("");
 
 async function fetchAll() {
   loading.value = true;
@@ -28,13 +29,18 @@ async function fetchAll() {
 
 async function remove(id: number, title: string) {
   if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  deleteError.value = "";
   deleting.value = id;
-  await fetch(`${API_URL}/api/artworks/${id}`, {
+  const res = await fetch(`${API_URL}/api/artworks/${id}`, {
     method: "DELETE",
     headers: authHeader(),
   });
-  artworks.value = artworks.value.filter(a => a.id !== id);
   deleting.value = null;
+  if (!res.ok) {
+    deleteError.value = `Failed to delete "${title}" (${res.status}). Try logging out and back in.`;
+    return;
+  }
+  artworks.value = artworks.value.filter(a => a.id !== id);
 }
 
 function doLogout() {
@@ -64,6 +70,8 @@ onMounted(fetchAll);
           class="bg-stone-800 text-white text-xs uppercase tracking-widest px-4 py-2 hover:bg-stone-700 transition-colors"
         >+ Add</button>
       </div>
+
+      <p v-if="deleteError" class="mb-4 text-xs text-red-400">{{ deleteError }}</p>
 
       <div v-if="loading" class="space-y-2">
         <div v-for="n in 5" :key="n" class="h-12 bg-stone-100 animate-pulse rounded" />
