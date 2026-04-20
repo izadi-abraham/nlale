@@ -11,7 +11,6 @@ defineProps<{ artwork: Artwork }>();
       :src="`${API_URL}/${artwork.image_path}`"
       :alt="artwork.title"
       class="w-full h-auto block transition-transform duration-500 group-hover:scale-105"
-      loading="lazy"
     />
     <!-- Title overlay on hover -->
     <div class="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/40 transition-colors duration-300 flex items-end">
