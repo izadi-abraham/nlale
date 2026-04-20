@@ -6,13 +6,12 @@ defineProps<{ artwork: Artwork }>();
 </script>
 
 <template>
-  <RouterLink :to="`/work/${artwork.id}`" class="group block relative overflow-hidden bg-stone-100">
+  <RouterLink :to="`/work/${artwork.id}`" class="group block relative overflow-hidden bg-stone-100 min-h-48">
     <img
       :src="`${API_URL}/${artwork.image_path}`"
       :alt="artwork.title"
       class="w-full h-auto block transition-transform duration-500 group-hover:scale-105"
       loading="lazy"
-      @error="($event.target as HTMLImageElement).src = 'https://placehold.co/400x300/e7e5e4/a8a29e?text=No+Image'"
     />
     <!-- Title overlay on hover -->
     <div class="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/40 transition-colors duration-300 flex items-end">
