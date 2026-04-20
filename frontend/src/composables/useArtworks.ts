@@ -33,7 +33,7 @@ export interface Filters {
 export function useArtworks() {
   const artworks = ref<Artwork[]>([]);
   const filters = ref<Filters>({ types: [], years: [], mediums: [], collections: [] });
-  const loading = ref(false);
+  const loading = ref(true);
   const error = ref<string | null>(null);
 
   const activeFilters = ref<Record<string, string>>({});
