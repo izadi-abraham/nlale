@@ -6,49 +6,50 @@ onMounted(() => { visible.value = true; });
 </script>
 
 <template>
-  <main class="max-w-4xl mx-auto px-6 py-16">
+  <main class="max-w-4xl mx-auto px-6 py-8 md:py-24">
     <div
-      class="grid md:grid-cols-2 gap-16 items-start transition-all duration-500 ease-out"
+      class="grid md:grid-cols-2 gap-8 md:gap-16 items-start transition-all duration-500 ease-out"
       :class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
     >
       <!-- Photo -->
       <div>
         <img
           src="/profile.jpg"
-          alt="N.lale"
+          alt="Negin Lale"
           class="w-full object-cover grayscale"
         />
       </div>
 
       <!-- Text -->
-      <div class="space-y-10 pt-2">
+      <div class="space-y-6">
 
-        <div>
-          <h1 style="font-family: 'Caveat', cursive; font-size: 2.4rem; font-weight: 700; color: #1e2e1c; line-height: 1; margin-bottom: 1.2rem;">N.lale</h1>
-          <p class="text-stone-600 leading-relaxed text-sm">
-            Negin Lale is a painter based in Amsterdam. Her work explores the quiet presence of everyday objects and figures — still lifes, interiors, and the human form — rendered in oil and watercolor with a careful attention to light and atmosphere.
+        <div class="space-y-5 text-stone-600 leading-relaxed text-sm">
+          <p>
+            I started drawing as a child, encouraged by my mother, and joined art classes from an early age.
+            Growing up in Iran, I was surrounded by the beautiful patterns, colors, and details of Persian carpets.
+            These early memories had a strong influence on the way I see art and inspired me to study Carpet Design
+            at university, where I learned more about Persian traditions, balance, and design.
+          </p>
+          <p>
+            After finishing my studies, I felt a strong desire to return to painting. I continued my education
+            at a private academy in Tehran, focusing on drawing, painting, and working from observation.
+          </p>
+          <p>
+            A few years later, I moved to the Netherlands and started a new chapter in my life and artistic journey.
+            There, I began studying sculpture at the Figura Academy in Amsterdam. Learning sculpture helped me better
+            understand the human body, form, and space — and it continues to support my painting practice.
+          </p>
+          <p>
+            Today, my work brings together memories of Iranian culture and a contemporary figurative style, shaped
+            by both my education and my experience of living between two cultures.
           </p>
         </div>
 
-        <div>
-          <h2 class="text-xs uppercase tracking-widest text-stone-400 mb-3">Background</h2>
-          <p class="text-stone-600 leading-relaxed text-sm">
-            Born in Iran, Negin studied fine arts before moving to the Netherlands. Her practice is rooted in classical observation — working from life, returning to the same subjects, and finding depth in simplicity. Each painting is an original work, built slowly in layers.
-          </p>
-        </div>
-
-        <div>
-          <h2 class="text-xs uppercase tracking-widest text-stone-400 mb-3">Currently</h2>
-          <p class="text-stone-600 leading-relaxed text-sm">
-            Continuing a series of still life paintings, exploring the relationship between objects and the spaces they inhabit. Also developing a body of figure work in the studio.
-          </p>
-        </div>
-
-        <div>
+        <div class="pt-4">
           <h2 class="text-xs uppercase tracking-widest text-stone-400 mb-3">Contact</h2>
           <div class="space-y-1 text-sm">
             <a href="mailto:hello@nlale.nl" class="block text-stone-500 hover:text-stone-800 transition-colors">hello@nlale.nl</a>
-            <a href="https://instagram.com" target="_blank" class="block text-stone-500 hover:text-stone-800 transition-colors">Instagram</a>
+            <a href="https://www.instagram.com/negin.lale" target="_blank" class="block text-stone-500 hover:text-stone-800 transition-colors">Instagram</a>
           </div>
         </div>
 
