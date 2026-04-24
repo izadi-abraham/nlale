@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import { useArtworks } from "@/composables/useArtworks";
 import GalleryGrid from "@/components/GalleryGrid.vue";
 import FilterBar from "@/components/FilterBar.vue";
 
+const route = useRoute();
 const { artworks, filters, loading, fetchFilters, fetchArtworks, setFilter } = useArtworks();
 
-const activeType = ref("");
+const activeType = ref((route.query.type as string) || "");
 const sort = ref<"newest" | "oldest">("newest");
 
 const displayed = computed(() => {
@@ -23,7 +25,11 @@ function setType(value: string) {
 
 onMounted(async () => {
   await fetchFilters();
-  await fetchArtworks();
+  if (activeType.value) {
+    setFilter("type", activeType.value);
+  } else {
+    await fetchArtworks();
+  }
 });
 </script>
 
