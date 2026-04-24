@@ -8,10 +8,14 @@ import { RouterLink } from "vue-router";
     <div class="absolute inset-0 home-bg" />
 
     <!-- Logo -->
-    <img src="/logo-sig.png" alt="N.lale" class="absolute top-10 left-12 select-none" style="height: 60px; width: auto;" />
+    <img
+      src="/logo-sig.png"
+      alt="N.lale"
+      class="absolute top-3 left-2 md:top-10 md:left-10 h-10 md:h-[60px] w-auto select-none"
+    />
 
     <!-- Nav -->
-    <nav class="absolute bottom-10 left-12 flex gap-8">
+    <nav class="absolute bottom-8 left-6 md:bottom-10 md:left-12 flex gap-8">
       <RouterLink
         to="/work"
         class="text-sm tracking-[0.25em] uppercase select-none hover:underline underline-offset-4 transition-opacity"
@@ -34,16 +38,10 @@ import { RouterLink } from "vue-router";
   background-repeat: no-repeat;
 }
 
-/*
-  On portrait phones the painting's aspect ratio is close to the viewport's,
-  so "cover" shows the full painting (armchair and all). Force the image
-  taller than the viewport so only the upper lamp area is visible,
-  matching the desktop crop.
-*/
 @media (max-width: 768px) and (orientation: portrait) {
   .home-bg {
-    background-size: auto 220%;
-    background-position: center top;
+    background-size: auto 105%;
+    background-position: 40% top;
   }
 }
 </style>
