@@ -25,7 +25,7 @@ onMounted(() => { visible.value = true; });
 
         <div class="space-y-5 text-stone-600 leading-relaxed text-sm">
           <p>
-            I started drawing as a child, encouraged by my mother, and joined art classes from an early age.
+            I started painting as a child, encouraged by my mother, and joined art classes from an early age.
             Growing up in Iran, I was surrounded by the beautiful patterns, colors, and details of Persian carpets.
             These early memories had a strong influence on the way I see art and inspired me to study Carpet Design
             at university, where I learned more about Persian traditions, balance, and design.
