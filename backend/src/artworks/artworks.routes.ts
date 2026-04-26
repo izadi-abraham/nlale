@@ -124,7 +124,7 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
       thumbnailIndex: t.Optional(t.String()),
       title:          t.String({ minLength: 1 }),
       description:    t.Optional(t.String()),
-      type:           t.Union([t.Literal("painting"), t.Literal("sculpture")]),
+      type:           t.Union([t.Literal("painting"), t.Literal("drawing"), t.Literal("sculpture")]),
       year:           t.String(),
       medium:         t.String({ minLength: 1 }),
       collection:     t.Optional(t.String()),
@@ -153,7 +153,7 @@ export const artworksRoutes = new Elysia({ prefix: "/api" })
     body: t.Object({
       title:       t.String({ minLength: 1 }),
       description: t.Optional(t.String()),
-      type:        t.Union([t.Literal("painting"), t.Literal("sculpture")]),
+      type:        t.Union([t.Literal("painting"), t.Literal("drawing"), t.Literal("sculpture")]),
       year:        t.String(),
       medium:      t.String({ minLength: 1 }),
       collection:  t.Optional(t.String()),
