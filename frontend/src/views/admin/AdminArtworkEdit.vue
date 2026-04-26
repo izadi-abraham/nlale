@@ -117,6 +117,7 @@ async function setThumbnail(imageId: number) {
               <label class="block text-xs uppercase tracking-widest text-stone-400 mb-1.5">Type</label>
               <select v-model="form.type" class="w-full border border-stone-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-stone-400">
                 <option value="painting">Painting</option>
+                <option value="drawing">Drawing</option>
                 <option value="sculpture">Sculpture</option>
               </select>
             </div>
