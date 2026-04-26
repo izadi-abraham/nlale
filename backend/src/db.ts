@@ -14,7 +14,7 @@ db.run(`
     title       TEXT    NOT NULL,
     description TEXT    NOT NULL DEFAULT '',
     image_path  TEXT    NOT NULL,
-    type        TEXT    NOT NULL CHECK (type IN ('painting', 'sculpture')),
+    type        TEXT    NOT NULL CHECK (type IN ('painting', 'drawing', 'sculpture')),
     year        INTEGER NOT NULL,
     medium      TEXT    NOT NULL,
     collection  TEXT    NOT NULL DEFAULT '',
@@ -22,6 +22,30 @@ db.run(`
     created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
   )
 `);
+
+// Migrate: widen the type CHECK constraint to include 'drawing'
+const artworksSchema = (db.query("SELECT sql FROM sqlite_master WHERE type='table' AND name='artworks'").get() as any)?.sql ?? '';
+if (!artworksSchema.includes("'drawing'")) {
+  db.run("PRAGMA foreign_keys = OFF");
+  db.run("ALTER TABLE artworks RENAME TO artworks_old");
+  db.run(`
+    CREATE TABLE artworks (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      title       TEXT    NOT NULL,
+      description TEXT    NOT NULL DEFAULT '',
+      image_path  TEXT    NOT NULL,
+      type        TEXT    NOT NULL CHECK (type IN ('painting', 'drawing', 'sculpture')),
+      year        INTEGER NOT NULL,
+      medium      TEXT    NOT NULL,
+      collection  TEXT    NOT NULL DEFAULT '',
+      dimensions  TEXT    NOT NULL DEFAULT '',
+      created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+    )
+  `);
+  db.run("INSERT INTO artworks SELECT * FROM artworks_old");
+  db.run("DROP TABLE artworks_old");
+  db.run("PRAGMA foreign_keys = ON");
+}
 
 db.run(`
   CREATE TABLE IF NOT EXISTS artwork_images (
