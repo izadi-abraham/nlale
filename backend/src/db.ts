@@ -27,6 +27,7 @@ db.run(`
 const artworksSchema = (db.query("SELECT sql FROM sqlite_master WHERE type='table' AND name='artworks'").get() as any)?.sql ?? '';
 if (!artworksSchema.includes("'drawing'")) {
   db.run("PRAGMA foreign_keys = OFF");
+  db.run("PRAGMA legacy_alter_table = ON");
   db.run("ALTER TABLE artworks RENAME TO artworks_old");
   db.run(`
     CREATE TABLE artworks (
@@ -44,6 +45,7 @@ if (!artworksSchema.includes("'drawing'")) {
   `);
   db.run("INSERT INTO artworks SELECT * FROM artworks_old");
   db.run("DROP TABLE artworks_old");
+  db.run("PRAGMA legacy_alter_table = OFF");
   db.run("PRAGMA foreign_keys = ON");
 }
 
@@ -55,6 +57,27 @@ db.run(`
     sort_order INTEGER NOT NULL DEFAULT 0
   )
 `);
+
+// Fix artwork_images FK if it was corrupted by the previous migration
+// (SQLite 3.26+ auto-updates FK references on rename, breaking the reference after drop)
+const imagesSchema = (db.query("SELECT sql FROM sqlite_master WHERE type='table' AND name='artwork_images'").get() as any)?.sql ?? '';
+if (imagesSchema.includes('artworks_old')) {
+  db.run("PRAGMA foreign_keys = OFF");
+  db.run("PRAGMA legacy_alter_table = ON");
+  db.run("ALTER TABLE artwork_images RENAME TO artwork_images_old");
+  db.run(`
+    CREATE TABLE artwork_images (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      artwork_id INTEGER NOT NULL REFERENCES artworks(id) ON DELETE CASCADE,
+      image_path TEXT    NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.run("INSERT INTO artwork_images SELECT * FROM artwork_images_old");
+  db.run("DROP TABLE artwork_images_old");
+  db.run("PRAGMA legacy_alter_table = OFF");
+  db.run("PRAGMA foreign_keys = ON");
+}
 
 // Migrate existing artworks into artwork_images if the table is empty
 const imageCount = (db.query("SELECT COUNT(*) as n FROM artwork_images").get() as any).n;
