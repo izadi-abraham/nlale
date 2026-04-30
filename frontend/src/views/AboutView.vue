@@ -48,7 +48,7 @@ onMounted(() => { visible.value = true; });
         <div class="pt-4">
           <h2 class="text-xs uppercase tracking-widest text-stone-400 mb-3">Contact</h2>
           <div class="space-y-1 text-sm">
-            <a href="mailto:hello@nlale.nl" class="block text-stone-500 hover:text-stone-800 transition-colors">hello@nlale.nl</a>
+            <a href="mailto:negin@nlale.nl" class="block text-stone-500 hover:text-stone-800 transition-colors">negin@nlale.nl</a>
             <a href="https://www.instagram.com/negin.lale" target="_blank" class="block text-stone-500 hover:text-stone-800 transition-colors">Instagram</a>
           </div>
         </div>
